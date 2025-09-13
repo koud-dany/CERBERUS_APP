@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Test - Manga Recap</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        video {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            border-radius: 8px;
+            background: #000;
+            margin: 10px 0;
+        }
+        .test-result {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .warning { background: #fff3cd; color: #856404; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>🎵 Audio Compatibility Test</h1>
+    <p>This tool will test your browser's ability to play MP4 videos with AAC audio from your manga recap app.</p>
+
+    <div class="test-card">
+        <h3>🔍 Browser Detection</h3>
+        <div id="browserInfo"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>🎬 Video Test</h3>
+        <p>Enter the URL of your generated video (from the manga app):</p>
+        <input type="text" id="videoUrl" placeholder="http://localhost:5000/uploads/.../manga_video_xxx.mp4" style="width: 100%; padding: 10px; margin: 10px 0;">
+        <button onclick="testVideo()">Test Video</button>
+        <button onclick="loadLastVideo()">Load Last Generated Video</button>
+        
+        <div id="videoContainer"></div>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>📊 Audio Analysis</h3>
+        <div id="audioAnalysis"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>🛠️ Troubleshooting Tips</h3>
+        <ul>
+            <li><strong>Chrome/Edge:</strong> Sometimes mutes videos by default. Click the speaker icon in the video controls.</li>
+            <li><strong>Firefox:</strong> May require user interaction before playing audio. Click play manually.</li>
+            <li><strong>Safari:</strong> Has strict audio policies. Ensure volume is up and site isn't muted.</li>
+            <li><strong>General:</strong> Check browser volume, system volume, and site permissions.</li>
+        </ul>
+    </div>
+
+    <script>
+        // Detect browser
+        function detectBrowser() {
+            const ua = navigator.userAgent;
+            let browser = 'Unknown';
+            
+            if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+            else if (ua.includes('Firefox')) browser = 'Firefox';
+            else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+            else if (ua.includes('Edg')) browser = 'Edge';
+            
+            const info = `
+                <div class="info">
+                    <strong>Browser:</strong> ${browser}<br>
+                    <strong>User Agent:</strong> ${ua}<br>
+                    <strong>Audio Context:</strong> ${window.AudioContext ? 'Supported' : 'Not supported'}
+                </div>
+            `;
+            document.getElementById('browserInfo').innerHTML = info;
+        }
+
+        // Test video loading and audio
+        function testVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            if (!url) {
+                alert('Please enter a video URL');
+                return;
+            }
+
+            const container = document.getElementById('videoContainer');
+            const results = document.getElementById('testResults');
+            
+            // Clear previous results
+            container.innerHTML = '';
+            results.innerHTML = '<div class="info">Testing video...</div>';
+
+            // Create video element
+            const video = document.createElement('video');
+            video.controls = true;
+            video.preload = 'metadata';
+            video.muted = false;
+            video.style.width = '100%';
+            video.style.maxWidth = '600px';
+
+            let testResults = [];
+
+            // Event listeners for testing
+            video.addEventListener('loadstart', () => {
+                testResults.push('<div class="info">✓ Video loading started</div>');
+                updateResults();
+            });
+
+            video.addEventListener('loadedmetadata', () => {
+                testResults.push('<div class="success">✓ Video metadata loaded</div>');
+                testResults.push(`<div class="info">Duration: ${video.duration.toFixed(2)}s</div>`);
+                testResults.push(`<div class="info">Dimensions: ${video.videoWidth}x${video.videoHeight}</div>`);
+                
+                // Check for audio tracks
+                if (video.mozHasAudio !== false && video.webkitAudioDecodedByteCount !== 0) {
+                    testResults.push('<div class="success">✓ Audio track detected</div>');
+                } else {
+                    testResults.push('<div class="warning">⚠ Audio track detection uncertain</div>');
+                }
+                updateResults();
+            });
+
+            video.addEventListener('canplay', () => {
+                testResults.push('<div class="success">✓ Video can start playing</div>');
+                updateResults();
+            });
+
+            video.addEventListener('play', () => {
+                testResults.push('<div class="success">✓ Video playback started</div>');
+                checkAudioLevel();
+            });
+
+            video.addEventListener('error', (e) => {
+                testResults.push(`<div class="error">✗ Video error: ${e.message || 'Unknown error'}</div>`);
+                updateResults();
+            });
+
+            video.addEventListener('stalled', () => {
+                testResults.push('<div class="warning">⚠ Video stalled (network issue?)</div>');
+                updateResults();
+            });
+
+            function updateResults() {
+                results.innerHTML = testResults.join('');
+            }
+
+            function checkAudioLevel() {
+                if (!window.AudioContext) {
+                    testResults.push('<div class="warning">⚠ Cannot analyze audio (AudioContext not supported)</div>');
+                    updateResults();
+                    return;
+                }
+
+                try {
+                    const audioContext = new AudioContext();
+                    const source = audioContext.createMediaElementSource(video);
+                    const analyser = audioContext.createAnalyser();
+                    source.connect(analyser);
+                    analyser.connect(audioContext.destination);
+                    
+                    analyser.fftSize = 256;
+                    const bufferLength = analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+                    
+                    function checkLevel() {
+                        analyser.getByteFrequencyData(dataArray);
+                        const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+                        
+                        if (average > 0) {
+                            testResults.push(`<div class="success">✓ Audio is playing (level: ${average.toFixed(1)})</div>`);
+                            updateResults();
+                        } else {
+                            setTimeout(checkLevel, 500);
+                        }
+                    }
+                    
+                    setTimeout(checkLevel, 1000);
+                    
+                } catch (error) {
+                    testResults.push(`<div class="warning">⚠ Audio analysis failed: ${error.message}</div>`);
+                    updateResults();
+                }
+            }
+
+            // Set source and add to page
+            video.src = url;
+            container.appendChild(video);
+        }
+
+        // Load the most recent video
+        function loadLastVideo() {
+            // This would typically get the last video from the server
+            // For now, we'll just set a placeholder
+            const baseUrl = window.location.origin.includes('localhost') ? 'http://localhost:5000' : window.location.origin;
+            document.getElementById('videoUrl').value = baseUrl + '/uploads/[session-id]/manga_video_[timestamp].mp4';
+            alert('Please replace [session-id] and [timestamp] with actual values from your video URL');
+        }
+
+        // Run browser detection on load
+        detectBrowser();
+    </script>
+</body>
+</html>

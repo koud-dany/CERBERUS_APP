@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Text → Images</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#0b0c10; --panel:#12131a; --text:#e8e8ea; --muted:#9aa0a6; --acc:#7aa2ff; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:var(--text); }
+    .wrap{ max-width:980px; margin:40px auto; padding:0 16px; }
+    .card{ background:linear-gradient(180deg,#151726, #101119); border:1px solid #1e2132; border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+    h1{ font-weight:800; margin:0 0 8px; }
+    p.muted{ color:var(--muted); margin-top:0; }
+    form{ display:grid; gap:12px; }
+    label{ font-weight:600; }
+    input[type="text"], select{ width:100%; padding:12px 14px; border-radius:12px; border:1px solid #24283a; background:#0f111a; color:var(--text); }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    button{ appearance:none; border:none; padding:12px 16px; border-radius:12px; background:var(--acc); color:#0a0c12; font-weight:800; cursor:pointer; }
+    button:hover{ filter:brightness(1.05); }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:12px; margin-top:16px; }
+    .thumb{ position:relative; background:#0a0b11; border:1px solid #22253a; border-radius:14px; overflow:hidden; }
+    .thumb img{ width:100%; display:block; }
+    .thumb .actions{ display:flex; justify-content:space-between; gap:8px; padding:10px; }
+    .flash{ padding:12px 14px; border-radius:12px; background:#2b1d1d; color:#ffbaba; border:1px solid #5f2c2c; margin-bottom:12px; }
+    .tag{ font-size:12px; padding:4px 8px; border:1px solid #2a3050; border-radius:999px; color:#a9b4ff; }
+    .nav-home{ position:fixed !important; top:10px; left:10px; background:#ff6b6b !important; color:white !important; padding:15px 25px; border-radius:30px; text-decoration:none; font-weight:bold; font-size:16px; transition:all 0.3s ease; z-index:9999 !important; box-shadow:0 5px 20px rgba(0,0,0,0.4); border:3px solid white; display:block; }
+    .nav-home:hover{ background:#ff5252 !important; transform:translateY(-3px); box-shadow:0 8px 25px rgba(0,0,0,0.5); }
+    footer{ color:#7b8190; text-align:center; margin:24px 0 0; }
+  </style>
+</head>
+<body>
+  <a href="../" class="nav-home">← Home</a>
+  <div class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <div class="card">
+      {% block content %}{% endblock %}
+    </div>
+    <footer>Built with Flask + OpenAI Images API</footer>
+  </div>
+</body>
+</html>
